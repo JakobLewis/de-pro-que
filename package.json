@@ -1,0 +1,17 @@
+{
+  "name": "de-pro-que",
+  "version": "1.0.0",
+  "description": "A small, unmaintained NodeJS deferred promise queue library for exclusive asynchronous resource access.",
+  "type": "module",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node ./lib/demo.js"
+  },
+  "author": "Jakob TL",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.11.19",
+    "typescript": "^4.9.5"
+  }
+}
