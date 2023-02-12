@@ -2,6 +2,15 @@ export declare class KeyLock<KeyT extends string | number> {
     private queue;
     has(key: KeyT): boolean;
     acquire(key: KeyT): Promise<() => void>;
+    wrap(func: (key: KeyT) => Promise<void>): typeof func;
+}
+export type QueueItem<ArgT extends any> = {
+    promise: Promise<void>;
+    arg: ArgT;
+};
+export declare class CustomLock<ArgT extends any> {
+    private queue;
+    addAccessor(executor: (arg: ArgT) => Promise<any>, filter: (newArg: ArgT, queue: QueueItem<ArgT>[]) => Promise<any>[]): typeof executor;
 }
 type PendingItem<Args extends any[], Result extends any> = {
     args: Args;

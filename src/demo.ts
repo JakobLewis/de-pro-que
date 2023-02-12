@@ -1,4 +1,4 @@
-import { Deproque, KeyLock } from "./main.js";
+import { Deproque, CustomLock, KeyLock } from "./main.js";
 import { writeFile, readFile, rm, mkdir } from "fs/promises";
 
 /**
@@ -29,6 +29,13 @@ writeMethods['keylock'] = async (args) => {
     release_lock();
     return r;
 };
+
+const extendableKeyLock = new CustomLock<[string, string]>();
+
+writeMethods['extendableKeyLock'] = extendableKeyLock.addAccessor(
+    (args) => writeFile(...args),
+    (newArg, queue) => queue.filter(comp => comp.arg[0] === newArg[0]).map(x => x.promise)
+);
 
 
 function randomString(n: number): string {
@@ -88,6 +95,7 @@ const finalResults = new Array<[string, number, number, string[]]>();
         const readPromises = new Array<Promise<Buffer>>(fileCount);
         for (let i = 0, n = fileCount; i < n; i += 1)
             readPromises[i] = readFile('./tests/' + i);
+
         const results = await Promise.all(readPromises);
 
         let corruptedFiles = 0;
@@ -102,6 +110,7 @@ const finalResults = new Array<[string, number, number, string[]]>();
             }
 
         }
+
 
         finalResults.push([methodName, t1 - t0, corruptedFiles, mismatches]);
 

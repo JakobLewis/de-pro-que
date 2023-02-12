@@ -39,6 +39,50 @@ export class KeyLock<KeyT extends string | number> {
             resolve();
         };
     }
+
+    wrap(func: (key: KeyT) => Promise<void>): typeof func {
+        return async (key) => {
+            const unlock = await this.acquire(key);
+            const result = func(key);
+            unlock();
+            return result;
+        }
+    }
+}
+
+export type QueueItem<ArgT extends any> = {
+    promise: Promise<void>,
+    arg: ArgT,
+};
+
+export class CustomLock<ArgT extends any> {
+    private queue = new Array<QueueItem<ArgT>>();
+
+    addAccessor(executor: (arg: ArgT) => Promise<any>, filter: (newArg: ArgT, queue: QueueItem<ArgT>[]) => Promise<any>[]): typeof executor {
+        return async (arg) => {
+            let resolve: (arg: ArgT) => void;
+            const promise = new Promise((_resolve, _reject) => {
+                resolve = _resolve as unknown as typeof resolve;
+            }) as Promise<void>;
+
+            const task = { promise, arg };
+            const dependents = filter(arg, this.queue);
+
+            this.queue.push(task);
+
+            await Promise.all(dependents);
+
+            try {
+                return (await executor(arg));
+            } catch (e) {
+                throw e;
+            } finally {
+                this.queue.splice(this.queue.indexOf(task), 1);
+                // @ts-expect-error
+                resolve();
+            }
+        }
+    }
 }
 
 type PendingItem<Args extends any[], Result extends any> = {
